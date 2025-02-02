@@ -178,9 +178,17 @@ exports.validateOtpService = async (email, enteredOtp, otpType, res) => {
                 logger.info("authService.validateOtpService END - USER NOT FOUND");
                 return res.status(404).json({ success: false, message: "User not found." });
             }
+            const userPayload = {
+                _id: user._id,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                phone: user.phone,
+                createdAt: user.createdAt
+            };
 
             const token = jwt.sign(
-                { email: user.email, userName: user.userName, role: user.role },
+                { email: user.email, userName: user.userName, role: user.role, user: userPayload },
                 process.env.JWT_SECRET,
                 { expiresIn: "1h" }
             );
@@ -295,8 +303,6 @@ exports.userSigninService = async (req, res) => {
             user = await getUserDetailsUsername(userName.trim());
         }
 
-        console.log(req.body);
-        console.log(user);
         if (!user || user.isActive === false) {
             logger.info("authService.userSigninService - USER NOT FOUND OR INACTIVE STOP");
             return res.status(404).json({ error: "User not found or inactive." });
@@ -323,8 +329,17 @@ exports.userSigninService = async (req, res) => {
             });
         }
 
+        const userPayload = {
+            _id: user._id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            phone: user.phone,
+            createdAt: user.createdAt
+        };
+
         // Generate JWT token for non-2FA users
-        const token = jwt.sign({ email: user.email, userName: user.userName, role: user.role }, process.env.JWT_SECRET, {
+        const token = jwt.sign({ email: user.email, userName: user.userName, role: user.role, user: userPayload }, process.env.JWT_SECRET, {
             expiresIn: "1h",
         });
 

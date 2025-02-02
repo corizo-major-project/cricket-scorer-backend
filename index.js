@@ -3,6 +3,8 @@ const cors = require("cors");
 const path = require("path");
 const connectToMongo = require("./connectors/mongoConnector");
 const authRoutes = require("./router/authRoutes");
+const playerRoutes = require("./router/playerRoutes");
+const teamRoutes = require("./router/teamRoutes");
 const requestResponseLogger = require("./middleware/loggerMiddleware");
 const logger = require("./connectors/logger");
 const { STATUS_CODES } = require("http");
@@ -20,12 +22,13 @@ app.use(express.urlencoded({ extended: true }));
 // CORS Configuration
 const corsOptions = {
     origin: [
-        "http://localhost",
         "http://localhost:8080",
         "http://localhost:3000",
         "http://localhost:3001",
     ],
+    credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ['Content-Type', 'Authorization'],
 };
 app.use(cors(corsOptions));
 
@@ -45,6 +48,8 @@ connectToMongo().then((db) => {
 /********************************ROUTERS****************************************/
 /*******************************************************************************/
 app.use("/v1/api/auth", authRoutes);
+app.use("/v1/api/player", playerRoutes);
+app.use("/v1/api/team", teamRoutes);
 app.get("/", (req, res) => {
     logger.info("Welcome Route START");
     logger.info("Welcome Route END");
