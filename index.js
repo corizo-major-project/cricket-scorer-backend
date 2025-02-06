@@ -1,4 +1,5 @@
 const express = require("express");
+const { swaggerUi, swaggerSpec } = require("./swagger");
 const cors = require("cors");
 const path = require("path");
 const connectToMongo = require("./connectors/mongoConnector");
@@ -8,6 +9,7 @@ const teamRoutes = require("./router/teamRoutes");
 const requestResponseLogger = require("./middleware/loggerMiddleware");
 const logger = require("./connectors/logger");
 const { STATUS_CODES } = require("http");
+const { swaggerAuth } = require("./middleware/swaggerAuth");
 
 const app = express();
 
@@ -50,6 +52,7 @@ connectToMongo().then((db) => {
 app.use("/v1/api/auth", authRoutes);
 app.use("/v1/api/player", playerRoutes);
 app.use("/v1/api/team", teamRoutes);
+app.use("/api-docs", swaggerAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get("/", (req, res) => {
     logger.info("Welcome Route START");
     logger.info("Welcome Route END");

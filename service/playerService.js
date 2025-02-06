@@ -9,7 +9,8 @@ exports.addPlayerService = async (userName, req, res) => {
     try {
         logger.info("playerService.addPlayerService START");
         const playerDetails = new Player(req.body);
-        if (playerDetails.userName === undefined || playerDetails.userName === null || playerDetails.userName === '' || playerDetails.userName !== userName) {
+        // || playerDetails.userName !== userName
+        if (playerDetails.userName === undefined || playerDetails.userName === null || playerDetails.userName === '') {
             logger.error("playerService.addPlayerService: Invalid Username");
             return res.status(400).json({ error: "Invalid Username" });
         }

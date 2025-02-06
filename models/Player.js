@@ -17,6 +17,7 @@ const playerSchema = new mongoose.Schema({
             "Right-Arm Fast-Medium", "Left-Arm Fast-Medium",
             "Right-Arm Medium", "Left-Arm Medium",
             "Right-Arm Off-Spinner", "Left-Arm Off-Spinner",
+            "Right-Arm Leg-Spinner", "Left-Arm Leg-Spinner",
             "Left-Arm Orthodox Spinner", "Right-Arm Orthodox Spinner",
         ],
         required: true,
@@ -82,6 +83,7 @@ const playerSchema = new mongoose.Schema({
         teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'teams' },
         teamName: { type: String },
         matchesPlayedForTeam: { type: Number, default: 0 },
+        since: { type: String }
     }],
     // matchesPlayedFor: [{
     //     matchId: { type: mongoose.Schema.Types.ObjectId, ref: 'matches' },

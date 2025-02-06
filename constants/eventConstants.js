@@ -12,3 +12,10 @@ exports.ADD_PLAYER = "add player"
 exports.GET_PLAYERS = "get players"
 exports.GET_PLAYER_DETAILS = "get player details"
 exports.GET_PLAYERS_SEARCH = "get players search"
+
+
+// Team Events
+exports.CREATE_TEAM = "create team"
+exports.GET_TEAMS = "get teams"
+exports.GET_TEAM = "get team"
+exports.UPDATE_TEAM = "update team"

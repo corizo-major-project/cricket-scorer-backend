@@ -108,3 +108,95 @@ exports.searchPlayers = async (searchQuery) => {
         throw error;
     }
 }
+
+exports.updatePlayersTeamsPlayedIn = async (teamId, teamName, members, createdAt) => {
+    try {
+        logger.info("playerRepository.updatePlayersTeamsPlayedIn START");
+
+        const playerUpdates = members.map(async (member) => {
+            if (member.playerId) {
+                await Player.findByIdAndUpdate(
+                    member.playerId,
+                    {
+                        $addToSet: {
+                            teamsPlayedIn: {
+                                teamId: teamId,
+                                teamName: teamName,
+                                since: createdAt
+                            }
+                        }
+                    }
+                );
+            }
+        });
+
+        await Promise.all(playerUpdates);
+        logger.info("playerRepository.updatePlayersTeamsPlayedIn END");
+    } 
+    catch (err) {
+        logger.error("Error in updatePlayersTeamsPlayedIn:", err);
+        throw err;
+    }
+};
+
+exports.updatePlayersTeamsPlayedInTeamUpdate = async (teamId, teamName, members, updatedAt) => {
+    try {
+        logger.info("playerRepository.updatePlayersTeamsPlayedIn START");
+
+        const playerUpdates = members.map(async (member) => {
+            if (member.playerId) {
+                await Player.updateOne(
+                    {
+                        _id: member.playerId,
+                        "teamsPlayedIn.teamId": teamId // Check if the player already has this teamId
+                    },
+                    {
+                        $set: {
+                            "teamsPlayedIn.$.teamName": teamName, // Update team name
+                            "teamsPlayedIn.$.since": updatedAt    // Update timestamp
+                        }
+                    }
+                );
+
+                // If the document was not updated, it means the teamId was not found in teamsPlayedIn, so we insert a new entry.
+                await Player.updateOne(
+                    {
+                        _id: member.playerId,
+                        "teamsPlayedIn.teamId": { $ne: teamId } // Only if teamId does not exist
+                    },
+                    {
+                        $push: {
+                            teamsPlayedIn: {
+                                teamId: teamId,
+                                teamName: teamName,
+                                since: updatedAt
+                            }
+                        }
+                    }
+                );
+            }
+        });
+
+        await Promise.all(playerUpdates);
+        logger.info("playerRepository.updatePlayersTeamsPlayedIn END");
+    } catch (err) {
+        logger.error("Error in updatePlayersTeamsPlayedIn:", err);
+        throw err;
+    }
+};
+
+exports.removePlayersFromTeam = async (teamId, removedPlayers) => {
+    try {
+        logger.info("playerRepository.removePlayersFromTeam START");
+
+        await Player.updateMany(
+            { _id: { $in: removedPlayers } },
+            { $pull: { teamsPlayedIn: { teamId: teamId } } } // Remove the team entry
+        );
+
+        logger.info("playerRepository.removePlayersFromTeam END");
+    } catch (err) {
+        logger.error("Error in removePlayersFromTeam:", err);
+        throw err;
+    }
+};
