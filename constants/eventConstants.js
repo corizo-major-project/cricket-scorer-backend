@@ -19,3 +19,9 @@ exports.CREATE_TEAM = "create team"
 exports.GET_TEAMS = "get teams"
 exports.GET_TEAM = "get team"
 exports.UPDATE_TEAM = "update team"
+exports.GET_TEAMS_SEARCH = "get teams search"
+exports.GET_TEAM_MEMBERS = "get team members"
+
+// Match Events
+exports.CREATE_MATCH = "create match"
+exports.FETCH_MATCHES = "get matches"

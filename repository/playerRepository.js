@@ -200,3 +200,32 @@ exports.removePlayersFromTeam = async (teamId, removedPlayers) => {
         throw err;
     }
 };
+
+exports.getPlayersByIds = async (playerIds) => {
+    try {
+        logger.info("playerRepository.getPlayersByIds START");
+        const players = await Player.find({ _id: { $in: playerIds } });
+        logger.info("playerRepository.getPlayersByIds END");
+        return players;
+    } catch (error) {
+        logger.error("Error in getPlayersByIds:", error);
+        throw error;
+    }
+}
+
+exports.updatePlayersWithMatch = async (playerIds, matchMeta) => {
+    try {
+        logger.info("playerRepository.updatePlayersWithMatch START");
+
+        await Player.updateMany(
+            { _id: { $in: playerIds } },  // Find all players in match
+            { $push: { matches: matchMeta } } // Append match details to matches array
+        );
+
+        logger.info("playerRepository.updatePlayersWithMatch END");
+    } catch (error) {
+        logger.error("Error in updatePlayersWithMatch:", error);
+        throw error;
+    }
+};
+

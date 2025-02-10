@@ -9,6 +9,8 @@ const { insertOTP, getOTPRecord, isEmailValidated, updateOTPValidation, getPendi
 const { getUserDetails, insertUser, checkUserExistence, userLoginRepo, updateUserPassword, getUserDetailsUsername } = require("../repository/usersRepository");
 const Users = require("../models/Users");
 const { EmailVerification, PasswordReset, TwoFactorAuthentication } = require("../constants/otpConstants");
+const { OTP_TYPE_EMAIL_VERIFICATION, OTP_TYPE_PASSWORD_RESET, OTP_IN_PROGRESS, OTP_TYPE_2FA, USER_EMAIL, EMAIL_SENT_SUCCESSFULLY, OTO_VALIDATED_SUCCESSFULLY, EMAIL_VERIFIED_SUCCESSFULLY, USER_REGISTERED_SUCCESSFULLY, PLEASE_VERIFY_2FA, USER_LOGGED_IN_SUCCESSFULLY, PASSWORD_CHANGED_SUCCESSFULLY } = require("../constants/general");
+const { EMAIL_ALREADY_EXISTS, USER_NOT_FOUND, FAILED_TO_SERVICE_EMAIL, OTP_NOT_FOUND, OTP_HAS_EXPIRED, INVALID_OTP, FAILED_TO_SERVICE_OTP_VALIDATION, EMAIL_NOT_VERIFIED, USERNAME_ALREADY_EXISTS, PLEASE_PROVIDE_REQUIRED_FIELDS, EMAIL_OR_USERNAME_ERROR, INVALID_PASSWORD, PASSWORDS_DO_NOT_MATCH } = require("../constants/errorConstants");
 
 // const accountSid = "AC8d57ab6f4fe7a79f7e9dfc4e7f6f70b5";
 // const authToken = "8b21baea41e5794a679cac33cfdf840c";
@@ -48,30 +50,30 @@ exports.sendEmailService = async (email, otpType, res) => {
         // Check user existence based on otpType
         let userExists = await getUserDetails(email);
 
-        if (otpType === "EMAILVERIFICATION") {
+        if (otpType === OTP_TYPE_EMAIL_VERIFICATION) {
             if (userExists) {
                 logger.info("authService.sendEmailService END - EMAIL EXISTS");
-                return res.status(409).json({ message: "Email already exists." });
+                return res.status(409).json({ message: EMAIL_ALREADY_EXISTS });
             }
         } else if (otpType === "PASSWORDRESET") {
             if (!userExists) {
                 logger.info("authService.sendEmailService END - USER NOT FOUND");
-                return res.status(404).json({ message: "User not found." });
+                return res.status(404).json({ message: USER_NOT_FOUND });
             }
         } else if (otpType === "2FA") {
             if (!userExists) {
                 logger.info("authService.sendEmailService END - USER NOT FOUND");
-                return res.status(404).json({ message: "User not found." });
+                return res.status(404).json({ message: USER_NOT_FOUND });
             }
         }
 
         const existingRequest = await getPendingOTPRequest(email, otpType);
 
         // Allow resend logic
-        if (existingRequest && otpType !== "EMAILVERIFICATION" && otpType !== "PASSWORDRESET") {
+        if (existingRequest && otpType !== OTP_TYPE_EMAIL_VERIFICATION && otpType !== OTP_TYPE_PASSWORD_RESET) {
             logger.info("An OTP request is already in progress");
             return res.status(429).json({
-                message: "An OTP request is already in progress. Please wait before requesting another.",
+                message: OTP_IN_PROGRESS,
             });
         }
 
@@ -84,16 +86,16 @@ exports.sendEmailService = async (email, otpType, res) => {
         // Generate email content based on otpType
 
         const emailContents =
-            otpType === "EMAILVERIFICATION"
+            otpType === OTP_TYPE_EMAIL_VERIFICATION
                 ? EmailVerification()
-                : otpType === "PASSWORDRESET"
+                : otpType === OTP_TYPE_PASSWORD_RESET
                     ? PasswordReset()
-                    : otpType === "2FA"
+                    : otpType === OTP_TYPE_2FA
                         ? TwoFactorAuthentication() : null;
 
         const user =
-            otpType === "EMAILVERIFICATION"
-                ? "user"
+            otpType === OTP_TYPE_EMAIL_VERIFICATION
+                ? USER_EMAIL
                 : userExists.userName;
 
         const emailContent = generateHtmlTemplateOTP(
@@ -135,11 +137,11 @@ exports.sendEmailService = async (email, otpType, res) => {
         logger.info("authService.sendEmailService END");
         return res.status(200).json({
             email: email,
-            message: "Email with OTP has been sent successfully."
+            message: EMAIL_SENT_SUCCESSFULLY
         });
     } catch (error) {
         logger.error("Error in sendEmailService:", error);
-        return res.status(500).json({ error: "Failed to send email." });
+        return res.status(500).json({ error: FAILED_TO_SERVICE_EMAIL });
     } finally {
         logger.info("authService.sendEmailService STOP");
     }
@@ -152,31 +154,31 @@ exports.validateOtpService = async (email, enteredOtp, otpType, res) => {
         const otpRecord = await getOTPRecord(email, otpType);
         if (!otpRecord) {
             logger.info("authService.validateOtpService END - OTP NOT FOUND");
-            return res.status(404).json({ success: false, message: "OTP not found." });
+            return res.status(404).json({ success: false, message: OTP_NOT_FOUND });
         }
 
         // Check if OTP has expired
         if (Date.now() > otpRecord.otpExpiry) {
             logger.info("authService.validateOtpService END - OTP EXPIRED");
-            return res.status(410).json({ success: false, message: "OTP has expired." });
+            return res.status(410).json({ success: false, message: OTP_HAS_EXPIRED });
         }
 
         // Verify OTP
         const isOtpValid = await bcrypt.compare(enteredOtp, otpRecord.hashedOtp);
         if (!isOtpValid) {
             logger.info("authService.validateOtpService END - INVALID OTP");
-            return res.status(400).json({ success: false, message: "Invalid OTP." });
+            return res.status(400).json({ success: false, message: INVALID_OTP });
         }
 
         // Mark OTP as validated
         await updateOTPValidation(email, otpType);
 
         // Generate and return JWT token for 2FA
-        if (otpType === "2FA") {
+        if (otpType === OTP_TYPE_2FA) {
             const user = await getUserDetails(email);
             if (!user) {
                 logger.info("authService.validateOtpService END - USER NOT FOUND");
-                return res.status(404).json({ success: false, message: "User not found." });
+                return res.status(404).json({ success: false, message: USER_NOT_FOUND });
             }
             const userPayload = {
                 _id: user._id,
@@ -197,16 +199,16 @@ exports.validateOtpService = async (email, enteredOtp, otpType, res) => {
             return res.status(200).json({
                 success: true,
                 token: token,
-                message: "OTP validated successfully. Use the token for further authentication.",
+                message: OTO_VALIDATED_SUCCESSFULLY,
             });
         }
 
         // Default response for other OTP types
         logger.info("authService.validateOtpService END");
-        return res.status(200).json({ success: true, message: "OTP validated successfully." });
+        return res.status(200).json({ success: true, message: OTO_VALIDATED_SUCCESSFULLY });
     } catch (error) {
         logger.error("Error in validateOtpService:", error);
-        return res.status(500).json({ error: "Failed to validate OTP." });
+        return res.status(500).json({ error: FAILED_TO_SERVICE_OTP_VALIDATION });
     }
 };
 
@@ -214,18 +216,18 @@ exports.validateOtpService = async (email, enteredOtp, otpType, res) => {
 exports.checkValidatedEmailSerivce = async (email, res) => {
     try {
         logger.info("authService.checkValidatedEmailSerivce START");
-        const otpRecord = await getOTPRecord(email, "EMAILVERIFICATION");
+        const otpRecord = await getOTPRecord(email, OTP_TYPE_EMAIL_VERIFICATION);
         const userRecord = await getUserDetails(email);
         if (userRecord) {
             logger.info("authService.checkValidatedEmailSerivce END");
-            return res.status(409).json({ success: true, message: "Email Already Exists" });
+            return res.status(409).json({ success: true, message: EMAIL_ALREADY_EXISTS });
         }
         if (otpRecord && otpRecord.isValidated) {
             logger.info("authService.checkValidatedEmailSerivce END");
-            return res.status(200).json({ success: true, message: "Email is Verified" });
+            return res.status(200).json({ success: true, message: EMAIL_VERIFIED_SUCCESSFULLY });
         }
         logger.info("authService.checkValidatedEmailSerivce END - EMAIL NOT VERIFIED")
-        return res.status(401).json({ success: false, message: "Email Not Verified" });
+        return res.status(401).json({ success: false, message: EMAIL_NOT_VERIFIED });
     }
     catch (error) {
         logger.error("Error in checkValidatedEmailSerivce:", error);
@@ -245,12 +247,12 @@ exports.userSignupService = async (req, res) => {
 
         if (emailExists) {
             logger.info("authService.userSignupService - EMAIL ALREADY EXISTS STOP");
-            return res.status(400).json({ error: "Email is already registered." });
+            return res.status(400).json({ error: EMAIL_ALREADY_EXISTS });
         }
 
         if (usernameExists) {
             logger.info("authService.userSignupService - USERNAME ALREADY EXISTS STOP");
-            return res.status(400).json({ error: "Username is already taken." });
+            return res.status(400).json({ error: USERNAME_ALREADY_EXISTS });
         }
 
         const emailValidationResult = await isEmailValidated(userData.email);
@@ -270,7 +272,7 @@ exports.userSignupService = async (req, res) => {
         await insertUser(userData);
         logger.info("authService.userSignupService STOP");
         return res.status(201).json({
-            message: "User registered successfully",
+            message: USER_REGISTERED_SUCCESSFULLY,
         });
     }
     catch (error) {
@@ -288,12 +290,12 @@ exports.userSigninService = async (req, res) => {
         // Validate input fields
         if (!userName && !email) {
             logger.info("authService.userSigninService - USERNAME OR EMAIL NOT PROVIDED STOP");
-            return res.status(400).json({ error: "Either userName or email must be provided." });
+            return res.status(400).json({ error: PLEASE_PROVIDE_REQUIRED_FIELDS });
         }
 
         if (!password) {
             logger.info("authService.userSigninService - PASSWORD NOT PROVIDED STOP");
-            return res.status(400).json({ error: "Password is required." });
+            return res.status(400).json({ error: PLEASE_PROVIDE_REQUIRED_FIELDS });
         }
 
         let user = null;
@@ -305,26 +307,26 @@ exports.userSigninService = async (req, res) => {
 
         if (!user || user.isActive === false) {
             logger.info("authService.userSigninService - USER NOT FOUND OR INACTIVE STOP");
-            return res.status(404).json({ error: "User not found or inactive." });
+            return res.status(404).json({ error: USER_NOT_FOUND });
         }
 
         if ((email && email !== user.email) || (userName && userName !== user.userName)) {
             logger.info("authService.userSigninService - EMAIL OR USERNAME ERROR STOP");
-            return res.status(401).json({ error: "Invalid email or username." });
+            return res.status(401).json({ error: EMAIL_OR_USERNAME_ERROR });
         }        
 
         // Compare password
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             logger.info("authService.userSigninService - PASSWORD INVALID STOP");
-            return res.status(401).json({ error: "Invalid password." });
+            return res.status(401).json({ error: INVALID_PASSWORD });
         }
 
         // Check for 2FA
         if (user.is2FA) {
             logger.info("authService.userSigninService - 2FA");
             return res.status(202).json({
-                message: "Please Verify that its you",
+                message: PLEASE_VERIFY_2FA,
                 email: user.email
             });
         }
@@ -340,14 +342,14 @@ exports.userSigninService = async (req, res) => {
 
         // Generate JWT token for non-2FA users
         const token = jwt.sign({ email: user.email, userName: user.userName, role: user.role, user: userPayload }, process.env.JWT_SECRET, {
-            expiresIn: "1h",
+            expiresIn: "8h",
         });
 
         logger.info("authService.userSigninService STOP");
         return res.status(200).json({
             token: token,
             role: user.role,
-            message: "User logged in successfully",
+            message: USER_LOGGED_IN_SUCCESSFULLY,
         });
     } catch (error) {
         logger.error("Error in userSigninService:", error);
@@ -361,12 +363,12 @@ exports.changePasswordService = async (req, res) => {
         const user = await getUserDetails(email);
         if (!user) {
             logger.info("authService.changePasswordService - USER NOT FOUND STOP");
-            return res.status(404).json({ error: "User not found." });
+            return res.status(404).json({ error: USER_NOT_FOUND });
         }
         // Check if new password and confirm password match
         if (password !== confirmPassword) {
             logger.info("authService.changePasswordService - PASSWORDS DO NOT MATCH STOP");
-            return res.status(400).json({ error: "Passwords do not match." });
+            return res.status(400).json({ error: PASSWORDS_DO_NOT_MATCH });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -374,7 +376,7 @@ exports.changePasswordService = async (req, res) => {
         // Update user password
         await updateUserPassword(email, hashedPassword, hashedPassword, timeStamp);
         logger.info("authService.changePasswordService STOP");
-        return res.status(200).json({ message: "Password changed successfully" });
+        return res.status(200).json({ message: PASSWORD_CHANGED_SUCCESSFULLY });
     } catch (error) {
         logger.error("Error in changePasswordService:", error);
         return res.status(500).json({ error: error.message });

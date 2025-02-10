@@ -6,12 +6,24 @@ const connectToMongo = require("./connectors/mongoConnector");
 const authRoutes = require("./router/authRoutes");
 const playerRoutes = require("./router/playerRoutes");
 const teamRoutes = require("./router/teamRoutes");
+const matchRoutes = require("./router/matchRoutes");
 const requestResponseLogger = require("./middleware/loggerMiddleware");
 const logger = require("./connectors/logger");
-const { STATUS_CODES } = require("http");
+const http = require("http"); 
+const { Server } = require("socket.io");
 const { swaggerAuth } = require("./middleware/swaggerAuth");
+require("./jobs/matchCrons");
 
 const app = express();
+const server = http.createServer(app); // Create HTTP server
+
+// Initialize Socket.IO
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000", // Frontend URL
+    methods: ["GET", "POST"]
+  }
+});
 
 // Middleware for logging requests and responses
 app.use(requestResponseLogger);
@@ -52,6 +64,7 @@ connectToMongo().then((db) => {
 app.use("/v1/api/auth", authRoutes);
 app.use("/v1/api/player", playerRoutes);
 app.use("/v1/api/team", teamRoutes);
+app.use("/v1/api/match", matchRoutes);
 app.use("/api-docs", swaggerAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get("/", (req, res) => {
     logger.info("Welcome Route START");

@@ -235,4 +235,68 @@ function updateTeam(req, res) {
     return teamHandler.updateTeamHandler(teamNameOld, req, res);
 }
 
+/**
+ * @swagger
+ * /v1/api/team/searchTeams:
+ *   get:
+ *     summary: Search team by Name
+ *     tags: [Team Routes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: search_query
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Search term to find team (name)
+ *     responses:
+ *       200:
+ *         description: List of matching teams retrieved successfully
+ *       400:
+ *         description: Bad request (missing or invalid search query)
+ *       401:
+ *         description: Unauthorized (invalid token)
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/searchTeams", jwtVerifier, roleVerifier([USER, ADMIN]), searchTeams);
+function searchTeams(req, res) {
+    const searchQuery = req.query.search_query;
+    return teamHandler.searchTeamsHandler(searchQuery, req, res);
+}
+
+/**
+ * @swagger
+ * /v1/api/team/getMembers/{teamName}:
+ *   get:
+ *     summary: Get members of a team
+ *     tags: [Team Routes]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: teamName
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Team Name to retrieve members for selecting players in a match
+ *     responses:
+ *       200:
+ *         description: Team members retrieved successfully
+ *       400:
+ *         description: Bad request (validation error, team name already in use)
+ *       403:
+ *         description: Unauthorized (if the authenticated user is not the team owner)
+ *       404:
+ *         description: Team not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/getMembers/:teamName", jwtVerifier, roleVerifier([USER, ADMIN]), getTeamMembers);
+function getTeamMembers(req, res) {
+    const teamName = req.params.teamName;
+    return teamHandler.getTeamMemberHandler(teamName, req, res);
+}
+
 module.exports = router;

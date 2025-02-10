@@ -1,2 +1,16 @@
 exports.ADMIN = "ADMIN"
 exports.USER = "USER"
+
+// AuthService.js
+exports.OTP_TYPE_EMAIL_VERIFICATION = "EMAILVERIFICATION"
+exports.OTP_TYPE_PASSWORD_RESET = "PASSWORDRESET"
+exports.OTP_TYPE_2FA = "2FA"
+exports.OTP_IN_PROGRESS = "An OTP request is already in progress. Please wait before requesting another."
+exports.USER_EMAIL = "User"
+exports.EMAIL_SENT_SUCCESSFULLY = "Email with OTP has been sent successfully"
+exports.OTO_VALIDATED_SUCCESSFULLY = "OTP validated successfully"
+exports.EMAIL_VERIFIED_SUCCESSFULLY = "Email verified successfully"
+exports.USER_REGISTERED_SUCCESSFULLY = "User registered successfully"
+exports.PLEASE_VERIFY_2FA = "Please Verify that its you"
+exports.USER_LOGGED_IN_SUCCESSFULLY = "User logged in successfully"
+exports.PASSWORD_CHANGED_SUCCESSFULLY = "Password changed successfully"

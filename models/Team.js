@@ -27,6 +27,28 @@ const teamSchema = new mongoose.Schema({
         batFirst: { type: Number, default: 0 },
         fieldFirst: { type: Number, default: 0 },
     },
+    matches: [{
+        matchId: { type: mongoose.Schema.Types.ObjectId, ref: 'matches' },
+        matchVenue: { type: String },
+        matchType: { type: String },
+        matchOvers: { type: Number },
+        matchTimeStatus: { type: String },
+        matchDateAndTime: { type: String },
+        matchDate: { type: Date },
+        teamA: { 
+            teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'teams' },
+            teamName: { type: String },
+        },
+        teamB: { 
+            teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'teams' },
+            teamName: { type: String },
+        },
+        winningTeam: { 
+            teamId: {type: mongoose.Schema.Types.ObjectId, ref: 'teams', default: null },
+            teamName: { type: String, default: null },
+        },
+        winMargin: { type: String, default: "" },
+    }],
     isActive: { type: Boolean, default: true },
     createdAt: { type: String, default: generateTimeStamp() },
     updatedAt: { type: String },

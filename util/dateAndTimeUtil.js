@@ -13,6 +13,12 @@ function generateTimeStamp() {
     return `${now.format('YYYY-MM-DDTHH:mm:ss')}.${String(nanoseconds).padStart(9, '0')}Z`;
 }
 
+function convertToTimestamp(inputDate) {
+    const momentDate = moment(inputDate); // Parse input date
+    const nanoseconds = momentDate.milliseconds() * 1000000; // Convert milliseconds to nanoseconds
+    return `${momentDate.format('YYYY-MM-DDTHH:mm:ss')}.${String(nanoseconds).padStart(9, '0')}Z`;
+}
+
 // Function to validate date in ISO 8601 format (with nanoseconds)
 function validateDate(value) {
     const date = moment(value, moment.ISO_8601, true);
@@ -37,4 +43,4 @@ function validateDate(value) {
     return true;
 }
 
-module.exports = { generateTimeStampOTP, generateTimeStamp, validateDate };
+module.exports = { generateTimeStampOTP, generateTimeStamp, validateDate, convertToTimestamp };

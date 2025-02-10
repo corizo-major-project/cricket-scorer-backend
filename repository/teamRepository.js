@@ -7,7 +7,7 @@ exports.createTeam = async (teamData) => {
         logger.info("teamService.createTeam END");
         return await teamData.save();
     }
-    catch(error) {
+    catch (error) {
         logger.error("Error in createTeam:", error);
         throw error;
     }
@@ -61,6 +61,73 @@ exports.updateTeam = async (teamId, teamData) => {
         return team;
     } catch (error) {
         logger.error("Error in updateTeam:", error);
+        throw error;
+    }
+}
+
+exports.searchTeams = async (searchQuery) => {
+    try {
+        logger.info("teamRepository.searchTeams START");
+        const teamList = await Team.aggregate([
+            {
+                $search: {
+                    index: "team_search",
+                    autocomplete: {
+                        query: searchQuery,
+                        path: "teamName"
+                    }
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    teamName: 1,
+                    userName: 1,
+                    location: 1,
+                }
+            }
+        ]);
+        logger.info("teamRepository.searchTeams END");
+        return teamList;
+    } catch (error) {
+        logger.error("Error in searchTeams:", error);
+        throw error;
+    }
+}
+
+exports.getTeamMembers = async (teamName) => {
+    try {
+        logger.info("teamRepository.getTeamMembers START");
+        const team = await Team.findOne({ teamName: teamName.trim() });
+        logger.info("teamRepository.getTeamMembers END");
+        return team;
+    } catch (error) {
+        logger.error("Error in getTeamMembers:", error);
+        throw error;
+    }
+}
+
+exports.getTeamsByIds = async (teamIds) => {
+    try {
+        logger.info("teamRepository.getTeamsByIds START");
+        const teams = await Team.find({ _id: { $in: teamIds } });
+        logger.info("teamRepository.getTeamsByIds END");
+        return teams;
+    } catch (error) {
+        logger.error("Error in getTeamsByIds:", error);
+        throw error;
+    }
+}
+
+exports.updateTeamsWithMatch = async (teamIds, matchMeta) => {
+    try {
+        logger.info("teamRepository.updateTeamsWithMatch START");
+        const teams = await Team.updateMany({ _id: { $in: teamIds } },
+            { $push: { matches: matchMeta } });
+        logger.info("teamRepository.updateTeamsWithMatch END");
+        return teams;
+    } catch (error) {
+        logger.error("Error in updateTeamsWithMatch:", error);
         throw error;
     }
 }

@@ -4,6 +4,7 @@ const { SEND_OTP, SEND_MAIL, VALIDATE_OTP, CHECK_VALIDATED_EMAIL, USER_SIGNUP, U
 const { insertEvent } = require("../repository/eventRepository");
 const authService = require("../service/authService");
 const Users = require("../models/Users");
+const { FAILED_TO_HANDLE_EMAIL_REQUEST, FAILED_TO_HANDLE_OTP_VALIDATION, FAILED_TO_HANDLE_EMAIL_VALIDATION, FAILED_TO_HANDLE_USER_SIGNUP, FAILED_TO_HANDLE_USER_SIGIN, FAILED_TO_HANDLE_CHANGE_PASSWORD } = require("../constants/errorConstants");
 
 exports.sendOtpHandler = async (phone, request, res) => {
     logger.info("authHandler.sendOtpHandler START");
@@ -43,7 +44,7 @@ exports.sendEmailHandler = async (email, otpType, req, res) => {
         return authService.sendEmailService(email, otpType, res);
     } catch (error) {
         logger.error("Error in sendEmailHandler:", error);
-        return res.status(500).json({ error: "Failed to handle email request" });
+        return res.status(500).json({ error: FAILED_TO_HANDLE_EMAIL_REQUEST });
     } finally {
         logger.info("authHandler.sendEmailHandler STOP");
     }
@@ -65,7 +66,7 @@ exports.validateOtpHandler = async (email, otp, otpType, req, res) => {
         return authService.validateOtpService(email, otp, otpType, res);
     } catch (error) {
         logger.error("Error in validateOtpHandler:", error);
-        return res.status(500).json({ error: "Failed to handle OTP validation" });
+        return res.status(500).json({ error: FAILED_TO_HANDLE_OTP_VALIDATION });
     } finally {
         logger.info("authHandler.validateOtpHandler STOP");
     }
@@ -88,7 +89,7 @@ exports.checkValidatedEmailHandler = async (email, req, res) => {
     }
     catch (error) {
         logger.error("Error in checkValidatedEmailHandler:", error);
-        return res.status(500).json({ error: "Failed to handle OTP validation" });
+        return res.status(500).json({ error: FAILED_TO_HANDLE_EMAIL_VALIDATION });
     } finally {
         logger.info("authHandler.checkValidatedEmailHandler STOP");
     }
@@ -111,7 +112,7 @@ exports.userSignupHandler = async (req, res) => {
     }
     catch (error) {
         logger.error("Error in userSignupHanlder:", error);
-        return res.status(500).json({ error: "Failed to user signup" });
+        return res.status(500).json({ error: FAILED_TO_HANDLE_USER_SIGNUP });
     } finally {
         logger.info("authHandler.userSignupHandler STOP");
     }
@@ -134,7 +135,7 @@ exports.userSigninHandler = async (req, res) => {
     }
     catch (error) {
         logger.error("Error in userSigninHandler:", error);
-        return res.status(500).json({ error: "Failed to user signin" });
+        return res.status(500).json({ error: FAILED_TO_HANDLE_USER_SIGIN });
     } finally {
         logger.info("authHandler.userSigninHandler STOP");
     }
@@ -157,7 +158,7 @@ exports.changePasswordHandler = async (req, res) => {
     }
     catch(err) {
         logger.error("Error in changePasswordHandler:", error);
-        return res.status(500).json({ error: "Failed to change Password" });
+        return res.status(500).json({ error: FAILED_TO_HANDLE_CHANGE_PASSWORD });
     }
     finally {
         logger.info("authHandler.changePasswordHandler STOP")

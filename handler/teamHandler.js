@@ -1,7 +1,7 @@
 const { generateTimeStamp } = require("../util/dateAndTimeUtil");
 const logger = require("../connectors/logger");
 const { insertEvent } = require("../repository/eventRepository");
-const { CREATE_TEAM, GET_TEAMS, GET_TEAM, UPDATE_TEAM } = require("../constants/eventConstants");
+const { CREATE_TEAM, GET_TEAMS, GET_TEAM, UPDATE_TEAM, GET_TEAMS_SEARCH, GET_TEAM_MEMBERS } = require("../constants/eventConstants");
 const teamService = require("../service/teamService");
 
 exports.createTeamHandler = async (req, res) => {
@@ -94,5 +94,51 @@ exports.updateTeamHandler = async (teamNameOld, req, res) => {
         return res.status(500).json({ error: "Failed to get all players" });
     } finally {
         logger.info("teamHandler.updateTeamHandler STOP");
+    }
+}
+
+exports.searchTeamsHandler = async (searchQuery, req, res) => {
+    logger.info("teamHandler.searchTeamsHandler START");
+    try {
+        const { userName } = req.user;
+        const event = {
+            eventType: GET_TEAMS_SEARCH,
+            userName: userName,
+            URL: req.url,
+            ipAddress: [req.ip],
+            httpMethod: req.method,
+            requestPayload: JSON.stringify(req.body),
+            createdAt: generateTimeStamp(),
+        }
+        await insertEvent(event);
+        return await teamService.searchTeamsService(searchQuery, res);
+    } catch (error) {
+        logger.error("Error in searchTeamsHandler:", error);
+        return res.status(500).json({ error: "Failed to get all players" });
+    } finally {
+        logger.info("teamHandler.searchTeamsHandler STOP");
+    }
+}
+
+exports.getTeamMemberHandler = async (teamName, req, res) => {
+    logger.info("teamHandler.getTeamMemberHandler START");
+    try {
+        const { userName } = req.user;
+        const event = {
+            eventType: GET_TEAM_MEMBERS,
+            userName: userName,
+            URL: req.url,
+            ipAddress: [req.ip],
+            httpMethod: req.method,
+            requestPayload: JSON.stringify(req.body),
+            createdAt: generateTimeStamp(),
+        }
+        await insertEvent(event);
+        return await teamService.getTeamMemberService(teamName, res);
+    } catch (error) {
+        logger.error("Error in getTeamMemberHandler:", error);
+        return res.status(500).json({ error: "Failed to get all players" });
+    } finally {
+        logger.info("teamHandler.getTeamMemberHandler STOP");    
     }
 }

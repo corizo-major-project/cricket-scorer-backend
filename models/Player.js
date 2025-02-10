@@ -24,7 +24,7 @@ const playerSchema = new mongoose.Schema({
         default: "Right-Arm Fast"
     },
     matchesPlayed: { type: Number, default: 0 },
-    totalRunsScored: { type: Number, default: 0},
+    totalRunsScored: { type: Number, default: 0 },
     totalWicketsTaken: { type: Number, default: 0 },
     battingStats: {
         matches: { type: Number, default: 0 },
@@ -85,21 +85,33 @@ const playerSchema = new mongoose.Schema({
         matchesPlayedForTeam: { type: Number, default: 0 },
         since: { type: String }
     }],
-    // matchesPlayedFor: [{
-    //     matchId: { type: mongoose.Schema.Types.ObjectId, ref: 'matches' },
-    //     matchLocation: { type: String },
-    //     groundName: { type: String },
-    //     matchDate: { type: Date },
-    //     teamA: { type: mongoose.Schema.Types.ObjectId, ref: 'teams' },
-    //     teamB: { type: mongoose.Schema.Types.ObjectId, ref: 'teams' },
-    //     winningTeam: { type: mongoose.Schema.Types.ObjectId, ref: 'teams', default: null }, // Winning team reference
-    //     winMargin: { type: String, default: "" }, 
-    // }],
+    matches: [{
+        matchId: { type: mongoose.Schema.Types.ObjectId, ref: 'matches' },
+        matchVenue: { type: String },
+        matchType: { type: String },
+        matchOvers: { type: Number },
+        matchTimeStatus: { type: String },
+        matchDateAndTime: { type: String },
+        matchDate: { type: Date },
+        teamA: {
+            teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'teams' },
+            teamName: { type: String },
+        },
+        teamB: {
+            teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'teams' },
+            teamName: { type: String },
+        },
+        winningTeam: {
+            teamId: { type: mongoose.Schema.Types.ObjectId, ref: 'teams', default: null },
+            teamName: { type: String, default: null },
+        },
+        winMargin: { type: String, default: "" },
+    }],
     isActive: { type: Boolean, default: true },
     createdAt: { type: String },
     updatedAt: { type: String },
 });
 
-const Player= mongoose.model('players', playerSchema);
+const Player = mongoose.model('players', playerSchema);
 
 module.exports = Player;

@@ -130,3 +130,34 @@ exports.updateTeamService = async (teamNameOld, userNameAuth, req, res) => {
         return res.status(500).json({ error: "Failed to update team" });
     }
 }
+
+exports.searchTeamsService = async (searchQuery, res) => {
+    try {
+        logger.info("teamService.searchTeamsService START");
+        if (!searchQuery || typeof searchQuery !== "string" || searchQuery.trim() === "") {
+            logger.error("playerService.searchPlayersService: Invalid search query");
+            return res.status(400).json({ error: "Invalid search query" });
+        }
+        const teams = await teamRepository.searchTeams(searchQuery);
+        logger.info("teamService.searchTeamsService END");
+        return res.status(200).json({ teams });
+    } catch (error) {
+        logger.error("Error in searchTeamsService:", error);
+        return res.status(500).json({ error: "Failed to search teams" });
+    }
+}
+
+exports.getTeamMemberService = async (teamName, res) => {
+    try {
+        logger.info("teamService.getTeamMemberService START");
+        const team = await teamRepository.getTeamMembers(teamName);
+        if (!team || !team.members || team.members.length === 0) {
+            return res.status(404).json({ error: "No members found for this team" });
+        }
+        logger.info("teamService.getTeamMemberService END");
+        return res.status(200).json({ members: team.members });
+    } catch (error) {
+        logger.error("Error in getTeamMemberService:", error);
+        return res.status(500).json({ error: "Failed to get team" });
+    }
+}
